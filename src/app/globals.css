@@ -2,14 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  color: #333; /* Set text color to a dark gray */
-  background-color: #f7f7f7; /* Set background color to a light gray */
-}
-
 /* Navbar styling */
 .navbar {
   background: linear-gradient(to bottom, #4285f4, black, #666, #fff, #666); /* Apply gradient background */
   color: white; /* Set text color to white */
   padding: 1rem; /* Add padding for spacing */
+}
+.error {
+  color: red;
+  font-size: 14px;
+  margin-top: 4px;
+}
+body {
+  font-family: Roboto, sans-serif; /* Use Roboto as the default font */
+  color: #333; /* Set text color to a dark gray */
+  background-color: #f7f7f7; /* Set background color to a light gray */
+}
+
+.heading {
+  font-family: Open Sans, sans-serif; /* Use Open Sans for headings */
+  font-weight: bold;
 }

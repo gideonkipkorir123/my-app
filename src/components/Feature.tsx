@@ -1,3 +1,4 @@
+'use client'
 import React from 'react';
 import { FaPlus } from 'react-icons/fa';
 
@@ -46,7 +47,7 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = () => {
         <Feature
           title="Quick Disbursement"
           description="Once approved, your loan amount will be disbursed to your account instantly. No more waiting for weeks to get access to your funds!"
-        />a
+        />
       </div>
     </section>
   );

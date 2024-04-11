@@ -1,6 +1,6 @@
+'use client'
 import React, { useState } from 'react';
 import { BsChevronDown, BsChevronUp } from 'react-icons/bs';
-
 const Benefits = () => {
   const [isOpen, setIsOpen] = useState([false, false, false, false]);
 

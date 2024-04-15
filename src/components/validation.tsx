@@ -1,5 +1,10 @@
 import * as yup from 'yup';
 
+export enum Role {
+  USER = 'user',
+  ADMIN = 'admin',
+}
+
 export interface Address {
   location: string;
   apartmentName: string;
@@ -13,6 +18,8 @@ export interface FormData {
   confirmPassword: string;
   address: Address;
   phoneNumber: string;
+  role: Role;
+  countryCode: string;
 }
 
 export const registrationSchema: yup.ObjectSchema<FormData> = yup.object().shape({
@@ -32,4 +39,10 @@ export const registrationSchema: yup.ObjectSchema<FormData> = yup.object().shape
     houseNumber: yup.string().required('House number is required'),
   }).required('Address is required'),
   phoneNumber: yup.string().matches(/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-s./0-9]+$/, 'Invalid phone number format').required('Phone number is required'),
+  role: yup.mixed<Role>().oneOf(Object.values(Role)).required('Role is required'),
+  countryCode: yup.string().required('Country code is required'),
+});
+export const loginvalidationSchema = yup.object().shape({
+  email: yup.string().email('Invalid email format').required('Email is required'),
+  password: yup.string().required('Password is required'),
 });

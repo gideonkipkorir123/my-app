@@ -1,60 +1,101 @@
 import axios from 'axios';
-import dotenv from 'dotenv';
 import { User } from '../../types';
+export interface Country {
+  alpha2Code: string;
+  name: string;
+  callingCodes: string[];
+  flagSvg: string;
+}
 
-dotenv.config();
+const API_URL = 'https://restcountries.com/v2/all';
 
-const BACKEND_URL = process.env.BACKEND_URL as string;
+
+export const getAllCountries = async (): Promise<Country[]> => {
+  try {
+    const response = await axios.get(API_URL);
+    const countriesData = response.data as any[];
+
+    const formattedCountries: Country[] = countriesData.map((countryData: any) => {
+      const { alpha2Code, name, callingCodes, flags } = countryData;
+      const flagSvg = flags?.svg;
+      return {
+        alpha2Code,
+        name,
+        callingCodes: callingCodes || [],
+        flagSvg: flagSvg || '',
+      };
+    });
+
+    return formattedCountries;
+  } catch (error) {
+    console.error('Error fetching countries:', error);
+    return [];
+  }
+};
+
+export interface Session {
+  sessionId: string;
+  user: User;
+  valid: boolean;
+}
+
+export interface LoginResponse {
+  accessToken: string;
+  refreshToken: string;
+  session: Session;
+}
+
+const BACKEND_URL = 'http://localhost:3500';
 
 const apiService = {
-  async registerUser(userData: User) {
+  async registerUser(userData: User): Promise<User> {
     try {
-      const response = await axios.post(`${BACKEND_URL}/api/register`, userData);
+      const response = await axios.post(`${BACKEND_URL}/auth/register`, userData);
       return response.data.user;
-    } catch (error:any) {
+    } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Failed to register user');
     }
   },
 
-  // Add more service functions here as needed
-  async loginUser(email: string, password: string) {
+  async loginUser(email: string, password: string): Promise<LoginResponse> {
     try {
-      const response = await fetch(`${BACKEND_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-        credentials: 'include',
+      const response = await axios.post<LoginResponse>(`${BACKEND_URL}/auth/login`, {
+        email,
+        password,
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
+      const responseData = response.data;
 
-      const data = await response.json();
-      return data;
-    } catch (error:any) {
+      localStorage.setItem('accessToken', responseData.accessToken);
+      localStorage.setItem('refreshToken', responseData.refreshToken);
+      sessionStorage.setItem('sessionId', responseData.session.sessionId);
+
+      return responseData;
+    } catch (error: any) {
       console.error('Error logging in user:', error.message || error);
       throw new Error(`Error logging in user: ${error.message}`);
     }
   },
 
-  // Add more service functions as needed
-  async getUserProfile() {
+  async getUserProfile(id:string): Promise<User> {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/user/profile`, {
-        method: 'GET',
-        credentials: 'include',
-      });
+      const sessionId = sessionStorage.getItem('sessionId');
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+      if (!sessionId) {
+        throw new Error('Session ID not found');
       }
 
-      const data = await response.json();
-      return data;
-    } catch (error:any) {
+      const response = await axios.get<User>(`${BACKEND_URL}/user/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+        params: {
+          sessionId,
+        },
+      });
+
+      return response.data;
+    } catch (error: any) {
       console.error('Error fetching user profile:', error.message || error);
       throw new Error(`Error fetching user profile: ${error.message}`);
     }

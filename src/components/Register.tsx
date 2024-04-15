@@ -1,25 +1,36 @@
-import React, { useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useDispatch, useSelector } from "react-redux";
-import { registerStart } from "../store/slices/userSlices";
+import { registerStart } from "../store/slices/register";
 import { RootState } from "../store/rootReducer";
-import { registrationSchema, FormData } from "./validation";
+import { registrationSchema, FormData, Role } from "./validation";
 import { FaArrowRight, FaEye, FaEyeSlash } from "react-icons/fa";
 import { AppDispatch } from "@/store/store";
-import apiService from "@/lib/user";
+import { getAllCountries, Country } from "../lib/user";
 
 const RegisterForm: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [showPassword, setShowPassword] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [registrationSuccess, setRegistrationSuccess] = useState<boolean>(false);
+
+
+  const [countries, setCountries] = useState<Country[]>([]);
   const {
     handleSubmit,
     register,
     formState: { errors },
     watch,
     reset,
+    setValue
   } = useForm<FormData>({
     resolver: yupResolver(registrationSchema),
+    defaultValues: {
+      role: Role.USER,
+      countryCode: "",
+      phoneNumber: ""
+    },
   });
   const registrationState = useSelector(
     (state: RootState) => state.registration
@@ -28,17 +39,23 @@ const RegisterForm: React.FC = () => {
 
   const onSubmit = async (data: FormData) => {
     try {
-      const { confirmPassword, ...formDataWithoutConfirmPassword } = data;
-      console.log("formDataWithoutConfirmPassword", formDataWithoutConfirmPassword);
-      await dispatch(registerStart(formDataWithoutConfirmPassword));
-      // await new Promise((resolve) => setTimeout(resolve, 1000));
-      reset();
+      const { countryCode, confirmPassword, ...formData } = data;
+      console.log(formData)
+
+      await dispatch(registerStart(formData));
+      // when the user successfully registers
+      setRegistrationSuccess(true);
+
+      setServerError(null);
+
+      reset()
     } catch (error: any) {
-      console.error("Registration failed:", error.message);
-      
+      console.error('Registration failed:', error.message);
     }
   };
-  
+
+
+
   const handleChange =
     (fieldName: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
       const { value } = e.target;
@@ -47,17 +64,73 @@ const RegisterForm: React.FC = () => {
 
   const handleAddressChange =
     (fieldName: keyof FormData["address"]) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const { value } = e.target;
-      register(`address.${fieldName}`);
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { value } = e.target;
+        register(`address.${fieldName}`);
+      };
+
+
+  const handleCountryCodeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedCountryCode = e.target.value;
+    setValue("countryCode", selectedCountryCode);
+
+    let phoneNumber = watch("phoneNumber");
+
+    phoneNumber = phoneNumber.replace(/^\+|\s+/g, '');
+
+    if (phoneNumber) {
+
+      if (phoneNumber.startsWith('0')) {
+
+        phoneNumber = `+${selectedCountryCode}${phoneNumber.substring(1)}`;
+      } else {
+
+        phoneNumber = `+${selectedCountryCode}${phoneNumber}`;
+      }
+    } else {
+
+      phoneNumber = `+${selectedCountryCode}`;
+    }
+
+    setValue("phoneNumber", phoneNumber);
+  };
+  const getErrorMessage = (error: string): string => {
+    const lowercaseError = error.toLowerCase();
+
+    if (lowercaseError.includes('email') && lowercaseError.includes('exists')) {
+      return 'This email address is already registered. Please use a different email.';
+    } else if (lowercaseError.includes('phone') && lowercaseError.includes('exists')) {
+      return 'This phone number is already registered. Please use a different phone number.';
+    }
+
+    return 'Registration failed. Please try again.';
+  };
+
+
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const countriesData = await getAllCountries();
+        setCountries(countriesData);
+      } catch (error) {
+        console.error('Error fetching countries:', error);
+      }
     };
 
+    fetchCountries();
+  }, []);
   return (
     <div className="flex justify-center">
       <div className="max-w-md w-full bg-white shadow-md rounded-lg p-6">
         <h2 className="text-3xl font-bold text-center mb-8">Register</h2>
 
         <form onSubmit={handleSubmit(onSubmit)}>
+          {/* handle server errors and dispaly them to the user */}
+          {serverError && <p className="text-red-500 mb-4">{serverError}</p>}
+          {/* Display success message upon successful registration */}
+          {registrationSuccess && (
+            <p className="text-green-500 mb-2">Registration successful! You can now log in.</p>
+          )}
           {/* Full Name Field */}
           <div className="mb-4">
             <label htmlFor="fullName" className="block text-sm font-bold">
@@ -208,6 +281,30 @@ const RegisterForm: React.FC = () => {
               </span>
             )}
           </div>
+          {/* Country Code Field */}
+          <div className="mb-4">
+            <label htmlFor="countryCode" className="block text-sm font-bold">
+              Country Code *
+            </label>
+            <select
+              {...register('countryCode')}
+              onChange={handleCountryCodeChange}
+              className="input-sm mb-2 px-2 py-1 rounded-md border border-gray-300 placeholder-gray-500 focus:outline-none focus:border-primary"
+              style={{ maxWidth: '200px' }}
+            >
+              <option value="">Select Country Code</option>
+              {countries.map((country) => (
+                <option key={country.alpha2Code} value={country.callingCodes?.[0]}>
+                  {`(+${country.callingCodes?.[0]}) ${country.name}`}
+                </option>
+              ))}
+            </select>
+            {errors.countryCode && (
+              <span className="error block mt-1 text-red-500 text-sm">
+                {errors.countryCode.message}
+              </span>
+            )}
+          </div>
 
           {/* Phone Number Field */}
           <div className="mb-4">
@@ -216,18 +313,14 @@ const RegisterForm: React.FC = () => {
             </label>
             <input
               type="text"
-              {...register("phoneNumber")}
-              onChange={handleChange("phoneNumber")}
+              {...register('phoneNumber')}
               className="input mb-2 px-4 py-3 rounded-md border border-gray-300 placeholder-gray-500 focus:outline-none focus:border-primary"
               placeholder="Phone Number"
             />
             {errors.phoneNumber && (
-              <span className="error block mt-1 text-red-500 text-sm">
-                {errors.phoneNumber.message}
-              </span>
+              <span className="error block mt-1 text-red-500 text-sm">{errors.phoneNumber.message}</span>
             )}
           </div>
-
           {/* Submit Button */}
           <button
             type="submit"
@@ -239,9 +332,14 @@ const RegisterForm: React.FC = () => {
 
         {/* Loading State */}
         {registrationState.isLoading && <p>Loading...</p>}
-        {/* Error State */}
+        {/* error handling */}
         {registrationState.error && (
-          <p className="text-red-500 mt-4">Error: {registrationState.error}</p>
+          <div className="error-container">
+            <p className="text-red-500 mb-2">Oops! Something went wrong.</p>
+            <p className="text-sm text-red-500">
+              {getErrorMessage(registrationState.error)}
+            </p>
+          </div>
         )}
       </div>
     </div>
@@ -249,6 +347,4 @@ const RegisterForm: React.FC = () => {
 };
 
 export default RegisterForm;
-function watch(arg0: string) {
-  throw new Error("Function not implemented.");
-}
+

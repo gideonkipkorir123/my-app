@@ -1,12 +1,10 @@
 import RegisterForm from '@/components/Register'
 import React from 'react'
 
-function DashBoardComponent() {
+export default function Register() {
   return (
     <div>
       <RegisterForm/>
     </div>
   )
 }
-
-export default DashBoardComponent

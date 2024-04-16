@@ -1,70 +1,68 @@
-'use client'
-import React, { useState } from 'react';
-import * as yup from 'yup';
+"use client"
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../store/rootReducer';
+import { resetPasswordStart } from '../store/slices/resetPassword';
+import { verifyTokenStart } from '../store/slices/resetPassword';
+import { passwordValidationSchema } from './validation';
+import { AppDispatch } from '@/store/store';
 
-const ResetPassword = () => {
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+const ResetPassword: React.FC<{ resetPasswordToken: string }> = ({ resetPasswordToken }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { isLoading: verificationLoading, error: verificationError } = useSelector(
+    (state: RootState) => state.forgotPassword
+  );
+  const { error: resetError } = useSelector((state: RootState) => state.resetPassword);
 
-  const validationSchema = yup.object().shape({
-    newPassword: yup.string()
-      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^a-zA-Z0-9])(?=.{8,})/, 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character')
-      .required('New Password is required'),
-    confirmPassword: yup.string().oneOf([newPassword], 'Passwords must match')
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    resolver: yupResolver(passwordValidationSchema),
   });
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    validationSchema.validate({ newPassword, confirmPassword }, { abortEarly: false })
-      .then(() => {
-        setSuccessMessage('Password reset successful');
-        setErrors({});
-        setNewPassword('');
-        setConfirmPassword('');
-      })
-      .catch((error: yup.ValidationError) => {
-        const validationErrors: { [key: string]: string } = {};
-        error.inner.forEach((e) => {
-          if (e.path) {
-            validationErrors[e.path] = e.message;
-          }
-        });
-        setErrors(validationErrors);
-      });
+  const onSubmit = (data: { newPassword: string }) => {
+    const { newPassword } = data;
+
+    dispatch(resetPasswordStart({ newPassword, resetPasswordToken: resetPasswordToken }));
   };
+
+  React.useEffect(() => {
+    dispatch(verifyTokenStart(resetPasswordToken));
+  }, [dispatch, resetPasswordToken]);
 
   return (
     <div className="max-w-md mx-auto text-center bg-white px-4 sm:px-8 py-10 rounded-xl shadow">
       <h1 className="text-2xl font-bold mb-6">Reset Password</h1>
-      {successMessage && <div className="text-green-600 mb-4">{successMessage}</div>}
-      <form onSubmit={handleSubmit}>
+      {verificationLoading && <div>Loading...</div>}
+      {verificationError && <div className="text-red-600 mb-4">{verificationError}</div>}
+      {resetError && <div className="text-red-600 mb-4">{resetError}</div>}
+      <form onSubmit={handleSubmit(onSubmit)}>
         <div className="mb-4">
-          <label htmlFor="newPassword" className="block text-sm font-bold">New Password</label>
+          <label htmlFor="newPassword" className="block text-sm font-bold">
+            New Password
+          </label>
           <input
             type="password"
             id="newPassword"
-            name="newPassword"
+            {...register('newPassword')}
             className="input mb-2 px-4 py-3 rounded-md border border-gray-300 placeholder-gray-500 text-black focus:outline-none focus:border-primary"
             placeholder="Enter new password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
           />
-          {errors.newPassword && <div className="text-red-600 mt-1">{errors.newPassword}</div>}
+          {errors.newPassword && <div className="text-red-600 mt-1">{errors.newPassword.message}</div>}
         </div>
         <div className="mb-4">
-          <label htmlFor="confirmPassword" className="block text-sm font-bold">Confirm Password</label>
+          <label htmlFor="confirmPassword" className="block text-sm font-bold">
+            Confirm Password
+          </label>
           <input
             type="password"
             id="confirmPassword"
-            name="confirmPassword"
+            {...register('confirmPassword')}
             className="input mb-2 px-4 py-3 rounded-md border border-gray-300 placeholder-gray-500 text-black focus:outline-none focus:border-primary"
             placeholder="Confirm new password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
           />
-          {errors.confirmPassword && <div className="text-red-600 mt-1">{errors.confirmPassword}</div>}
+          {/* Only show validation error for confirmPassword */}
+          {errors.confirmPassword && <div className="text-red-600 mt-1">{errors.confirmPassword.message}</div>}
         </div>
         <button
           type="submit"

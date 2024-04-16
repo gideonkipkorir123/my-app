@@ -1,50 +1,82 @@
-'use client'
-import React, { useState } from 'react';
+"use client"
+import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../store/rootReducer';
+import { forgotPasswordStart } from '../store/slices/forgotPassword';
+import { AppDispatch } from '@/store/store';
+import { forgotPasswordSchema } from './validation';
+
+interface ForgotPasswordForm {
+  email: string;
+}
 
 const ForgotPassword: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
+  const dispatch = useDispatch<AppDispatch>();
+  const { isLoading, error, message } = useSelector((state: RootState) => state.forgotPassword);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    // Here you can implement the logic to send a password reset link to the provided email address
-    setMessage(`Password reset link sent to: ${email}`);
-    setEmail('');
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<ForgotPasswordForm>({
+    resolver: yupResolver(forgotPasswordSchema),
+  });
+
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
+
+  const onSubmit = async (formData: ForgotPasswordForm) => {
+    const { email } = formData;
+    dispatch(forgotPasswordStart(email));
+    setSubmittedEmail(email);
   };
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(event.target.value);
-  };
+  useEffect(() => {
+    if (message) {
+      setSuccessMessage(`Password reset link sent to: ${submittedEmail}`);
+      reset();
+    }
+  }, [message, reset, submittedEmail]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="max-w-md w-full bg-white shadow-md rounded-lg p-6">
         <h2 className="text-3xl font-bold text-center mb-8">Forgot Password</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4"> {/* Reduced margin-bottom from mb-8 to mb-4 */}
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="mb-4">
             <label htmlFor="email" className="block text-sm font-bold">
               Email *
             </label>
             <input
               type="email"
-              name="email"
-              value={email}
-              onChange={handleChange}
+              id="email"
+              {...register('email')}
               className="input mb-2 px-4 py-3 rounded-md border border-gray-300 placeholder-gray-500 text-black focus:outline-none focus:border-primary"
               placeholder="Enter your email"
             />
+            {errors.email && (
+              <div className="text-red-500 text-sm mt-1">{errors.email.message}</div>
+            )}
           </div>
-          {message && (
-            <div className="text-center text-sm text-gray-600 mb-4">
-              <span className="font-bold">{message}</span>
+          {successMessage && (
+            <div className="text-green-500 text-sm mb-4" style={{ color: 'black' }}>
+              {successMessage}
+            </div>
+          )}
+          {error && (
+            <div className="text-red-500 text-sm mb-4">
+              {error.includes('not found') ? (
+                <>Email not found. Please enter a valid email.</>
+              ) : (
+                <>Password reset failed. Please try again.</>
+              )}
             </div>
           )}
           <div className="flex justify-start">
             <button
               type="submit"
               className="bg-red-500 text-white text-sm font-bold py-3 px-8 rounded-md hover:bg-red-600 focus:outline-none focus:bg-red-600"
+              disabled={isLoading}
             >
-              Reset Password
+              {isLoading ? 'Resetting...' : 'Reset Password'}
             </button>
           </div>
         </form>

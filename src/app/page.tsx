@@ -1,13 +1,13 @@
 "use client"
 import ReduxProvider from '@/store/reduxProvider'
 import React from 'react'
-import LoginForm from './(auth)/@login/page'
+import ForgotPasswordPage from './(auth)/@forgotPassword/page'
 
 
 function Home() {
   return (
     <ReduxProvider>
-      <LoginForm/>
+      <ForgotPasswordPage/>
     </ReduxProvider>
   )
 }

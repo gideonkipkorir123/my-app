@@ -1,10 +1,14 @@
 import { combineReducers } from '@reduxjs/toolkit';
 import registrationReducer from './slices/register';
-import loginReducer from '../store/slices/login';
+import loginReducer from './slices/login';
+import forgotPasswordReducer from './slices/forgotPassword';
+import resetPasswordReducer from './slices/resetPassword';
 
 const rootReducer = combineReducers({
   registration: registrationReducer,
   login: loginReducer,
+  forgotPassword: forgotPasswordReducer,
+  resetPassword: resetPasswordReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

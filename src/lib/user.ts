@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { User } from '../../types';
+
 export interface Country {
   alpha2Code: string;
   name: string;
@@ -8,7 +9,6 @@ export interface Country {
 }
 
 const API_URL = 'https://restcountries.com/v2/all';
-
 
 export const getAllCountries = async (): Promise<Country[]> => {
   try {
@@ -77,7 +77,30 @@ const apiService = {
     }
   },
 
-  async getUserProfile(id:string): Promise<User> {
+  async requestPasswordReset(email: string): Promise<void> {
+    try {
+      const response = await axios.post<void>(`${BACKEND_URL}/auth/forgotPassword`, { email });
+      return response.data;
+    } catch (error: any) {
+      console.error('Error initiating password reset:', error.message || error);
+      throw new Error(`Error initiating password reset: ${error.message}`);
+    }
+  },
+
+  async resetUserPassword(newPassword: string, resetPasswordToken: string): Promise<void> {
+    try {
+      const response = await axios.post<void>(`${BACKEND_URL}/auth/resetPassword`, {
+        newPassword,
+        resetPasswordToken,
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Error resetting password:', error.message || error);
+      throw new Error(`Error resetting password: ${error.message}`);
+    }
+  },
+
+  async getUserProfile(id: string): Promise<User> {
     try {
       const sessionId = sessionStorage.getItem('sessionId');
 
@@ -98,6 +121,16 @@ const apiService = {
     } catch (error: any) {
       console.error('Error fetching user profile:', error.message || error);
       throw new Error(`Error fetching user profile: ${error.message}`);
+    }
+  },
+
+  async verifyToken(resetPasswordToken: string): Promise<any> {
+    try {
+      const response = await axios.post<any>(`${BACKEND_URL}/auth/verifyToken`, { resetPasswordToken });
+      return response.data;
+    } catch (error: any) {
+      console.error('Error verifying resetPasswordToken:', error.message || error);
+      throw new Error(`Error verifying resetPasswordToken: ${error.message}`);
     }
   },
 };

@@ -46,3 +46,16 @@ export const loginvalidationSchema = yup.object().shape({
   email: yup.string().email('Invalid email format').required('Email is required'),
   password: yup.string().required('Password is required'),
 });
+export const forgotPasswordSchema = yup.object().shape({
+  email: yup.string().email('Please enter a valid email address').required('Email is required'),
+});
+export const passwordValidationSchema = yup.object().shape({
+  newPassword: yup
+    .string()
+    .matches(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^a-zA-Z0-9])(?=.{8,})/,
+      'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character'
+    )
+    .required('New Password is required'),
+  confirmPassword: yup.string().oneOf([yup.ref('newPassword')], 'Passwords must match'),
+});

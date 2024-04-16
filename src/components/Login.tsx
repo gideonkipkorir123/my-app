@@ -1,8 +1,10 @@
+"use client"
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
+import { useRouter } from 'next/navigation';
 import { RootState } from '../store/rootReducer';
 import { loginvalidationSchema } from './validation';
 import { loginStart } from '@/store/slices/login';
@@ -15,6 +17,7 @@ interface LoginForm {
 
 const Login: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter(); // Access the router object from Next.js
 
   const {
     register,
@@ -26,7 +29,7 @@ const Login: React.FC = () => {
     mode: 'onTouched',
     defaultValues: {
       email: '',
-      password: '', 
+      password: '',
     },
   });
 
@@ -57,6 +60,10 @@ const Login: React.FC = () => {
   };
 
   const loginState = useSelector((state: RootState) => state.login);
+
+  const handleForgotPasswordClick = () => {
+    router.push('/reset-password');
+  };
 
   return (
     <div className="flex justify-center text-black">
@@ -120,11 +127,16 @@ const Login: React.FC = () => {
               className="bg-red-500 text-white text-sm font-bold py-3 px-8 rounded-md focus:outline-none hover:bg-red-600"
               disabled={!email || !password || isSubmitting}
             >
-              {isSubmitting ? 'Submitting...' : loginState.isLoading ? 'Logging in...' : 'Login'}
+              {isSubmitting
+                ? 'Submitting...'
+                : loginState.isLoading
+                ? 'Logging in...'
+                : 'Login'}
             </button>
             <button
               type="button"
               className="text-sm text-primary hover:underline focus:outline-none"
+              onClick={handleForgotPasswordClick}
             >
               Forgot password?
             </button>

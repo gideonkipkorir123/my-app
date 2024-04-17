@@ -1,4 +1,3 @@
-"use client"
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -7,6 +6,7 @@ import { RootState } from '../store/rootReducer';
 import { forgotPasswordStart } from '../store/slices/forgotPassword';
 import { AppDispatch } from '@/store/store';
 import { forgotPasswordSchema } from './validation';
+import { useRouter } from 'next/navigation';
 
 interface ForgotPasswordForm {
   email: string;
@@ -23,6 +23,8 @@ const ForgotPassword: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
 
+  const router = useRouter();
+
   const onSubmit = async (formData: ForgotPasswordForm) => {
     const { email } = formData;
     dispatch(forgotPasswordStart(email));
@@ -35,6 +37,19 @@ const ForgotPassword: React.FC = () => {
       reset();
     }
   }, [message, reset, submittedEmail]);
+
+  useEffect(() => {
+  
+    if (successMessage) {
+      const redirectTimeout = setTimeout(() => {
+        router.push('/'); 
+      }, 3000);
+
+      return () => {
+        clearTimeout(redirectTimeout);
+      };
+    }
+  }, [successMessage, router]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">
@@ -82,7 +97,7 @@ const ForgotPassword: React.FC = () => {
         </form>
         <div className="text-center mt-2">
           <div className="flex justify-start">
-            <span className="text-sm">Remember your password? <a href="#" className="text-primary hover:underline">Login here</a></span>
+            <span className="text-sm">Remember your password? <a href="/auth/login" className="text-primary hover:underline">Login here</a></span>
           </div>
         </div>
       </div>

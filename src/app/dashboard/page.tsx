@@ -1,11 +1,11 @@
-import Login from '@/components/Login'
+import DashBoardComponent from '@/components/DashBoard'
 import ReduxProvider from '@/store/reduxProvider'
 import React from 'react'
 
-export default function LoginForm() {
+export default function DashboardPage() {
   return (
     <ReduxProvider>
-      <Login/>
+      <DashBoardComponent/>
     </ReduxProvider>
   )
 }

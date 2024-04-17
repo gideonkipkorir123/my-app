@@ -1,49 +1,57 @@
 "use client"
-import React, { useState } from 'react';
+import React, { ReactNode } from 'react';
 import './Layout.css';
+import { usePathname } from 'next/navigation'; // Assuming you have a custom usePathname hook
 
 interface LayoutProps {
-  children: React.ReactNode;
-  forgotPassword: React.ReactNode;
-  login: React.ReactNode;
-  register: React.ReactNode;
+  children: ReactNode;
+  login: ReactNode;
+  register: ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({
   children,
-  forgotPassword,
   login,
   register,
 }) => {
-  const [activeComponent, setActiveComponent] = useState<string>('');
+  const pathname = usePathname(); // Assuming usePathname is a custom hook to get the current pathname
+
+  // Determine if the user is on the login or register page
+  const isLoginPage = pathname === '/login';
+  const isRegisterPage = pathname === '/register';
 
   return (
     <div className="layout-container">
       {children}
 
       <div className="button-container">
-        <button className="button" onClick={() => setActiveComponent('login')}>
-          Show Login
-        </button>
-        <button className="button" onClick={() => setActiveComponent('register')}>
-          Show Register
-        </button>
-        <button
-          className="button"
-          onClick={() => setActiveComponent('forgotPassword')}
-        >
-          Forgot Password
-        </button>
+        {/* Conditionally render buttons based on the current page */}
+        {isRegisterPage && (
+          <button
+            className="button"
+            onClick={() => window.location.href = '/login'} 
+          >
+            Login
+          </button>
+        )}
+
+        {isLoginPage && (
+          <button
+            className="button"
+            onClick={() => window.location.href = '/register'} 
+          >
+            Register
+          </button>
+        )}
       </div>
 
       <div className="component-container">
-        {activeComponent === 'forgotPassword' && (
-          <div className="forgot-password-container">{forgotPassword}</div>
-        )}
-        {activeComponent === 'login' && (
+        {/* Conditionally render login or register component based on the current page */}
+        {isLoginPage && (
           <div className="login-container">{login}</div>
         )}
-        {activeComponent === 'register' && (
+
+        {isRegisterPage && (
           <div className="register-container">{register}</div>
         )}
       </div>

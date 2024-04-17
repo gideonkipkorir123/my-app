@@ -1,13 +1,14 @@
-import RegisterForm from '@/components/Register'
+"use client"
+import ForgotPassword from '@/components/ForgotPassword'
 import ReduxProvider from '@/store/reduxProvider'
 import React from 'react'
 
-export default function Register() {
+export default function ForgotPasswordPage() {
   return (
     <div>
       <ReduxProvider>
 
-        <RegisterForm />
+      <ForgotPassword/>
       </ReduxProvider>
     </div>
   )

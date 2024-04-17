@@ -9,6 +9,7 @@ import { RootState } from '../store/rootReducer';
 import { loginvalidationSchema } from './validation';
 import { loginStart } from '@/store/slices/login';
 import { AppDispatch } from '@/store/store';
+import Link from 'next/link';
 
 interface LoginForm {
   email: string;
@@ -17,7 +18,7 @@ interface LoginForm {
 
 const Login: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const router = useRouter(); // Access the router object from Next.js
+  const router = useRouter();
 
   const {
     register,
@@ -60,10 +61,6 @@ const Login: React.FC = () => {
   };
 
   const loginState = useSelector((state: RootState) => state.login);
-
-  const handleForgotPasswordClick = () => {
-    router.push('/reset-password');
-  };
 
   return (
     <div className="flex justify-center text-black">
@@ -133,13 +130,7 @@ const Login: React.FC = () => {
                 ? 'Logging in...'
                 : 'Login'}
             </button>
-            <button
-              type="button"
-              className="text-sm text-primary hover:underline focus:outline-none"
-              onClick={handleForgotPasswordClick}
-            >
-              Forgot password?
-            </button>
+            <Link href="/forgotPassword">Forgot Password</Link>
           </div>
           {loginState.error && (
             <div className="error" style={{ color: 'red', textAlign: 'center' }}>
